@@ -1,25 +1,39 @@
 import logo from './logo.svg';
 import './App.css';
 import Button from '@material-ui/core/Button';
+import Switch from '@material-ui/core/Switch';
+
 
 function App() {
   
   const [state, setState] = React.useState({
-    checkedA: true,
-    checkedB: true,
+    checked: true,
   });
 
   const handleChange = (event) => {
-    setState({ ...state, [event.target.name]: event.target.checked });
+    //setState({ ...state, [event.target.name]: event.target.checked });
+    let id_zona = 'huerto';
+
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id_zona, status: 1 })
+  };
+
+    fetch('http://rapsberry.local:5000/on_off',requestOptions)
+        .then(response => response.json())
+        .then(json => console.log(json));
+
+
   };
 
   return (
     <div className="App">
       <Switch
-        checked={state.checkedB}
+        checked={state.checked}
         onChange={handleChange}
         color="primary"
-        name="checkedB"
+        name="checked"
         inputProps={{ 'aria-label': 'primary checkbox' }}
       />
 
