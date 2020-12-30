@@ -1,3 +1,4 @@
+import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Button from '@material-ui/core/Button';
@@ -13,17 +14,35 @@ function App() {
   const handleChange = (event) => {
     //setState({ ...state, [event.target.name]: event.target.checked });
     let id_zona = 'huerto';
+    let nuevoEstado;
 
-    const requestOptions = {
+    //Petición GET a gpio_status para obtener el estado del riego
+    const requestOptions_GET = {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id_zona })
+    };
+
+    fetch('http://rapsberry.local:5000/gpio_status')
+        .then(response => response.json())
+        .then(json => {
+          console.log(json);
+          nuevoEstado= !json;
+        });
+    
+    
+    //Petición POST a on_off para cambiar el estado del riego
+    const requestOptions_POST = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id_zona, status: 1 })
-  };
+      body: JSON.stringify({ id: id_zona, status: nuevoEstado })
+    };    
 
-    fetch('http://rapsberry.local:5000/on_off',requestOptions)
+    fetch('http://rapsberry.local:5000/on_off',requestOptions_POST)
         .then(response => response.json())
-        .then(json => console.log(json));
-
+        .then(json => console.log(json)).then(setState({ ...state, checked: nuevoEstado }));
+    
+    
 
   };
 
