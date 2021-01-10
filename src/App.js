@@ -23,7 +23,7 @@ import Slider from '@material-ui/core/Slider';
 function App() {
 
   // VARIABLES GLOBALES
-  const API_URL = "http://192.168.0.129:5000";
+  const API_URL = "http://raspberry.local:5000";
   const requestOptions_GET = {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' }
@@ -43,7 +43,7 @@ function App() {
 
 
   //parametros para el calendario
-  const [selectedDate, setSelectedDate] = React.useState(new Date('2021-01-01T21:01:01'));
+  const [selectedDate, setSelectedDate] = React.useState(new Date());
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
@@ -53,6 +53,7 @@ function App() {
 
   const [state, setState] = React.useState({
     checked: false,
+    checkedTest: false,
   });
 
   // FUNCIONES
@@ -71,7 +72,7 @@ function App() {
       });*/
     
     //Petición POST a on_off para cambiar el estado del riego
-    const requestOptions_POST = await {
+    const requestOptions_POST = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ "id": id_sector, "status": bool2string(!estado) })
@@ -79,11 +80,42 @@ function App() {
 
     await fetch(`${API_URL}/on_off`, requestOptions_POST)
       .then(response => response.json())
-      .then(json => console.log(json)).then(setState({ ...state, checked: !estado })).then(console.log("Estado: " + estado));
+      .then(json => console.log(json)).then(setState({ ...state, checked: await !estado })).then(console.log("Estado: " + estado));
   };
+
+  const testHandleSwitchChange = async (event) => {
+    let id_sector = "huerto";
+    //let estado = true;
+
+    gpio_status(id_sector)
+    .then(estado => {
+      //console.log(typeof(estado.gpio_status))
+      on_off(id_sector, !!!estado.gpio_status)
+      .then(() => setState({ ...state, [event.target.name]: !!!estado.gpio_status }))
+    });
+
+    //console.log(estado)    
+  }
 
   function bool2string(b){
     return b ? "1" : "0"; 
+  }
+
+  async function gpio_status(id){
+    const respuesta = await fetch(`${API_URL}/gpio_status?id=${encodeURIComponent(id)}`, requestOptions_GET);
+    const estado = await respuesta.json();
+    return estado;
+  }
+
+  async function on_off(id, status){
+    const requestOptions_POST = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ "id": id, "status": bool2string(status) })
+    };
+
+    const respuesta = await fetch(`${API_URL}/on_off`, requestOptions_POST);
+    return respuesta;
   }
 
   return (
@@ -99,6 +131,22 @@ function App() {
 
         <Button variant="contained" color="primary" onClick={() => {
           let id_sector = 'huerto';
+          let nuevoEstado = 1;
+          const requestOptions_POST = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ "id": id_sector, "status": nuevoEstado.toString() })
+          };
+
+          fetch(`${API_URL}/on_off`, requestOptions_POST)
+            .then(response => response.json())
+            .then(json => console.log(json));
+        }}>
+          Enciende
+      </Button>
+
+      <Button variant="contained" color="secondary" onClick={() => {
+          let id_sector = 'huerto';
           let nuevoEstado = 0;
           const requestOptions_POST = {
             method: 'POST',
@@ -110,8 +158,16 @@ function App() {
             .then(response => response.json())
             .then(json => console.log(json));
         }}>
-          Prueba
+          Apaga
       </Button>
+
+      <Switch
+          checked={state.checkedTest}
+          onChange={testHandleSwitchChange}
+          color="primary"
+          name="checkedTest"
+          inputProps={{ 'aria-label': 'primary checkbox' }}
+        />
 
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
           <Grid container justify="space-around">
@@ -157,7 +213,6 @@ function App() {
           max={180}
         />
         <Checkbox
-          defaultChecked
           color="primary"
           inputProps={{ 'aria-label': 'secondary checkbox' }}
         />
