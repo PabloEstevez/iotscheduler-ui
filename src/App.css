@@ -39,6 +39,7 @@
 }
 
 .miswitch{
-  margin-bottom: 5px;
+  padding: 15px;
   color: #282c34;
+  background-color: #cfe8fc;
 }

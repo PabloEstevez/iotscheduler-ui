@@ -1,7 +1,7 @@
 import React from 'react';
 //import logo from './logo.svg';
 import './App.css';
-import Button from '@material-ui/core/Button';
+//import Button from '@material-ui/core/Button';
 import Switch from '@material-ui/core/Switch';
 import Checkbox from '@material-ui/core/Checkbox';
 import Container from '@material-ui/core/Container';
@@ -35,19 +35,6 @@ function App() {
     headers: { 'Content-Type': 'application/json' }
   };
 
-{/**  
-  //parametros para el slider
-  const classes = makeStyles({
-    slider: {
-      width: 50,
-    },
-  });
-
-  function valuetext(value) {
-    return `${value} minutos`;
-  }
-*/}
-
   //parametros para el slider
 
   const useStyles = makeStyles({
@@ -57,8 +44,12 @@ function App() {
     input: {
       width: 42,
     },
+    paper: {
+      backgroundColor: "#cfe8fc",
+      alignContent: "flex-end"
+    }
   });
-  
+
   const classes = useStyles();
   const [value, setValue] = React.useState(30);
 
@@ -71,13 +62,14 @@ function App() {
   };
 
   const handleBlur = () => {
+    let max = 180
     if (value < 0) {
       setValue(0);
-    } else if (value > 100) {
-      setValue(100);
+    } else if (value > max) {
+      setValue(max);
     }
   };
-  
+
 
 
   //parametros para el calendario
@@ -92,60 +84,34 @@ function App() {
   const [state, setState] = React.useState({
     checked: false,
     checkedTest: false,
+    huerto: false,
+    aspersores: false,
   });
 
   // FUNCIONES
 
   const handleSwitchChange = async (event) => {
-    //setState({ ...state, [event.target.name]: event.target.checked });
-    let id_sector = 'huerto';
-    //let nuevoEstado;
-
-    //Petición GET a gpio_status para obtener el estado del riego
-    const estado = await fetch(`${API_URL}/gpio_status?id=${encodeURIComponent(id_sector)}`, requestOptions_GET)
-      .then(response => response.json().gpio_status);
-      /*.then(json => {
-        nuevoEstado = !json.gpio_status;
-        console.log("Nuevo estado: " + nuevoEstado);
-      });*/
-    
-    //Petición POST a on_off para cambiar el estado del riego
-    const requestOptions_POST = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ "id": id_sector, "status": bool2string(!estado) })
-    };
-
-    await fetch(`${API_URL}/on_off`, requestOptions_POST)
-      .then(response => response.json())
-      .then(json => console.log(json)).then(setState({ ...state, checked: await !estado })).then(console.log("Estado: " + estado));
-  };
-
-  const testHandleSwitchChange = async (event) => {
-    let id_sector = "huerto";
-    //let estado = true;
+    let id_sector = event.target.name;
 
     gpio_status(id_sector)
-    .then(estado => {
-      //console.log(typeof(estado.gpio_status))
-      on_off(id_sector, !!!estado.gpio_status)
-      .then(() => setState({ ...state, [event.target.name]: !!!estado.gpio_status }))
-    });
-
-    //console.log(estado)    
+      .then(estado => {
+        //console.log(typeof(estado.gpio_status))
+        on_off(id_sector, !!!estado.gpio_status)
+          .then(() => setState({ ...state, [event.target.name]: !!!estado.gpio_status }))
+      });
   }
 
-  function bool2string(b){
-    return b ? "1" : "0"; 
+  function bool2string(b) {
+    return b ? "1" : "0";
   }
 
-  async function gpio_status(id){
+  async function gpio_status(id) {
     const respuesta = await fetch(`${API_URL}/gpio_status?id=${encodeURIComponent(id)}`, requestOptions_GET);
     const estado = await respuesta.json();
     return estado;
   }
 
-  async function on_off(id, status){
+  async function on_off(id, status) {
     const requestOptions_POST = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -159,75 +125,48 @@ function App() {
   return (
     <div className="App">
       <Container fixed>
-{/**  
-       <Switch
-          checked={state.checked}
-          onChange={handleSwitchChange}
-          color="primary"
-          name="checked"
-          inputProps={{ 'aria-label': 'primary checkbox' }}
-        />
-*/}
-{/**  
-        <Button variant="contained" color="primary" onClick={() => {
-          let id_sector = 'huerto';
-          let nuevoEstado = 1;
-          const requestOptions_POST = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ "id": id_sector, "status": nuevoEstado.toString() })
-          };
+        <Grid container spacing={1} justify="center" alignItems="center">
+          <Grid item xs={6}>
+            <Paper className={classes.paper}>
+              <Grid container spacing={1} justify="center" alignItems="center">
+                <Grid item xs={7}>
+                  Huerto
+                </Grid>
+                <Grid item xs={4}>
+                  <Switch
+                    className="switch"
+                    checked={state.huerto}
+                    onChange={handleSwitchChange}
+                    color="primary"
+                    name="huerto"
+                    inputProps={{ 'aria-label': 'primary checkbox' }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+          <Grid item xs={6}>
+            <Paper className={classes.paper}>
+              <Grid container spacing={1} justify="center" alignItems="center">
+                <Grid item xs={7}>
+                  Aspersores
+                </Grid>
+                <Grid item xs={4}>
+                  <Switch
+                    className="switch"
+                    checked={state.aspersores}
+                    onChange={handleSwitchChange}
+                    color="primary"
+                    name="aspersores"
+                    inputProps={{ 'aria-label': 'primary checkbox' }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
 
-          fetch(`${API_URL}/on_off`, requestOptions_POST)
-            .then(response => response.json())
-            .then(json => console.log(json));
-        }}>
-          Enciende
-      </Button>
-*/}
-{/**  
-      <Button variant="contained" color="secondary" onClick={() => {
-          let id_sector = 'huerto';
-          let nuevoEstado = 0;
-          const requestOptions_POST = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ "id": id_sector, "status": nuevoEstado.toString() })
-          };
-
-          fetch(`${API_URL}/on_off`, requestOptions_POST)
-            .then(response => response.json())
-            .then(json => console.log(json));
-        }}>
-          Apaga
-      </Button>
-*/}
-      
-
-
-      <Grid container spacing={6}>
-        <Grid item xs={6} className="miswitch">
-          <Paper className={classes.paper}>Huerto</Paper>
-          <Switch
-            checked={state.checkedTest}
-            onChange={testHandleSwitchChange}
-            color="primary"
-            name="checkedTest"
-            inputProps={{ 'aria-label': 'primary checkbox' }}
-          />
+          </Grid>
         </Grid>
-        <Grid item xs={6} style={{ backgroundColor: '#cfe8fc', }} >
-          <Paper className={classes.paper}>Aspersores</Paper>
-          <Switch
-            checked={state.checkedTest}
-            onChange={testHandleSwitchChange}
-            color="primary"
-            name="checkedTest"
-            inputProps={{ 'aria-label': 'primary checkbox' }}
-          />
-        </Grid>
-      </Grid>
-      
+
 
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
           <Grid container justify="space-around">
@@ -260,33 +199,33 @@ function App() {
         <Typography id="discrete-slider" gutterBottom>
           Duración
         </Typography>
-        
-      {/** SLIDER */}
-      <Grid container spacing={2} alignItems="center">
-        <Grid item xs>
-          <Slider
-            value={typeof value === 'number' ? value : 0}
-            onChange={handleSliderChange}
-            aria-labelledby="input-slider"
-          />
+
+        {/** SLIDER */}
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs>
+            <Slider
+              value={typeof value === 'number' ? value : 0}
+              onChange={handleSliderChange}
+              aria-labelledby="input-slider"
+            />
+          </Grid>
+          <Grid item>
+            <Input
+              className={classes.input}
+              value={value}
+              margin="dense"
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              inputProps={{
+                step: 5,
+                min: 1,
+                max: 180,
+                type: 'number',
+                'aria-labelledby': 'input-slider',
+              }}
+            />
+          </Grid>
         </Grid>
-        <Grid item>
-          <Input
-            className={classes.input}
-            value={value}
-            margin="dense"
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            inputProps={{
-              step: 10,
-              min: 1,
-              max: 120,
-              type: 'number',
-              'aria-labelledby': 'input-slider',
-            }}
-          />
-        </Grid>
-      </Grid>
 
         {/**  
         <Slider
