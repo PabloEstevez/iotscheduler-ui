@@ -15,10 +15,16 @@ import {
   KeyboardTimePicker,
   KeyboardDatePicker,
 } from '@material-ui/pickers';
-//imports para el slider
+
+//imports para el slider2
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Slider from '@material-ui/core/Slider';
+import Input from '@material-ui/core/Input';
+//import VolumeUp from '@material-ui/icons/VolumeUp';
+
+//imports para los grid
+import Paper from '@material-ui/core/Paper';
 
 function App() {
 
@@ -29,7 +35,7 @@ function App() {
     headers: { 'Content-Type': 'application/json' }
   };
 
-
+{/**  
   //parametros para el slider
   const classes = makeStyles({
     slider: {
@@ -40,6 +46,38 @@ function App() {
   function valuetext(value) {
     return `${value} minutos`;
   }
+*/}
+
+  //parametros para el slider
+
+  const useStyles = makeStyles({
+    root: {
+      width: 250,
+    },
+    input: {
+      width: 42,
+    },
+  });
+  
+  const classes = useStyles();
+  const [value, setValue] = React.useState(30);
+
+  const handleSliderChange = (event, newValue) => {
+    setValue(newValue);
+  };
+
+  const handleInputChange = (event) => {
+    setValue(event.target.value === '' ? '' : Number(event.target.value));
+  };
+
+  const handleBlur = () => {
+    if (value < 0) {
+      setValue(0);
+    } else if (value > 100) {
+      setValue(100);
+    }
+  };
+  
 
 
   //parametros para el calendario
@@ -121,14 +159,16 @@ function App() {
   return (
     <div className="App">
       <Container fixed>
-        <Switch
+{/**  
+       <Switch
           checked={state.checked}
           onChange={handleSwitchChange}
           color="primary"
           name="checked"
           inputProps={{ 'aria-label': 'primary checkbox' }}
         />
-
+*/}
+{/**  
         <Button variant="contained" color="primary" onClick={() => {
           let id_sector = 'huerto';
           let nuevoEstado = 1;
@@ -144,7 +184,8 @@ function App() {
         }}>
           Enciende
       </Button>
-
+*/}
+{/**  
       <Button variant="contained" color="secondary" onClick={() => {
           let id_sector = 'huerto';
           let nuevoEstado = 0;
@@ -160,14 +201,33 @@ function App() {
         }}>
           Apaga
       </Button>
+*/}
+      
 
-      <Switch
-          checked={state.checkedTest}
-          onChange={testHandleSwitchChange}
-          color="primary"
-          name="checkedTest"
-          inputProps={{ 'aria-label': 'primary checkbox' }}
-        />
+
+      <Grid container spacing={6}>
+        <Grid item xs={6} className="miswitch">
+          <Paper className={classes.paper}>Huerto</Paper>
+          <Switch
+            checked={state.checkedTest}
+            onChange={testHandleSwitchChange}
+            color="primary"
+            name="checkedTest"
+            inputProps={{ 'aria-label': 'primary checkbox' }}
+          />
+        </Grid>
+        <Grid item xs={6} style={{ backgroundColor: '#cfe8fc', }} >
+          <Paper className={classes.paper}>Aspersores</Paper>
+          <Switch
+            checked={state.checkedTest}
+            onChange={testHandleSwitchChange}
+            color="primary"
+            name="checkedTest"
+            inputProps={{ 'aria-label': 'primary checkbox' }}
+          />
+        </Grid>
+      </Grid>
+      
 
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
           <Grid container justify="space-around">
@@ -200,6 +260,35 @@ function App() {
         <Typography id="discrete-slider" gutterBottom>
           Duración
         </Typography>
+        
+      {/** SLIDER */}
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs>
+          <Slider
+            value={typeof value === 'number' ? value : 0}
+            onChange={handleSliderChange}
+            aria-labelledby="input-slider"
+          />
+        </Grid>
+        <Grid item>
+          <Input
+            className={classes.input}
+            value={value}
+            margin="dense"
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            inputProps={{
+              step: 10,
+              min: 1,
+              max: 120,
+              type: 'number',
+              'aria-labelledby': 'input-slider',
+            }}
+          />
+        </Grid>
+      </Grid>
+
+        {/**  
         <Slider
           margin="normal"
           className={classes.slider}
@@ -212,6 +301,10 @@ function App() {
           min={5}
           max={180}
         />
+        */}
+
+
+
         <Checkbox
           color="primary"
           inputProps={{ 'aria-label': 'secondary checkbox' }}

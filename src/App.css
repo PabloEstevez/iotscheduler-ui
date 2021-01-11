@@ -37,3 +37,8 @@
     transform: rotate(360deg);
   }
 }
+
+.miswitch{
+  margin-bottom: 5px;
+  color: #282c34;
+}
