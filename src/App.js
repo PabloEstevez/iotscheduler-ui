@@ -1,10 +1,15 @@
 import React, { useEffect } from 'react';
 //import logo from './logo.svg';
 import './App.css';
-//import Button from '@material-ui/core/Button';
+import Button from '@material-ui/core/Button';
 import Switch from '@material-ui/core/Switch';
 import Checkbox from '@material-ui/core/Checkbox';
 import Container from '@material-ui/core/Container';
+import FormLabel from '@material-ui/core/FormLabel';
+import FormControl from '@material-ui/core/FormControl';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormHelperText from '@material-ui/core/FormHelperText';
 
 //imports para el calendario
 import 'date-fns';
@@ -46,7 +51,8 @@ function App() {
       backgroundColor: "#cfe8fc",
       alignContent: "flex-end",
       marginBottom: 10,
-    }
+      textTransform: "capitalize",
+    },
   });
 
   const classes = useStyles();
@@ -74,10 +80,24 @@ function App() {
     console.log("newSectorState: ", sectorState)
   }, []);
 
+
+  // Para seleccionar los sectores en la programacion
+  const [selectedSectors, setSelectedSectors] = React.useState({
+    aspersores_selection: false,
+    bancal_1_selection: false,
+    bancal_2_selection: false,
+    bancal_3_W_selection: false,
+    bancal_3_E_selection: false,
+    huerto_selection: false,
+  })
+  const { aspersores_selection, bancal_1_selection, bancal_2_selection, bancal_3_W_selection, bancal_3_E_selection, huerto_selection } = selectedSectors;
+  const error = [aspersores_selection, bancal_1_selection, bancal_2_selection, bancal_3_W_selection, bancal_3_E_selection, huerto_selection].filter((v) => v).length === 0;
   // Parametros para la fecha/hora
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   // Para el slider
-  const [value, setValue] = React.useState(30);
+  const [duracion, setDuracion] = React.useState(30);
+  // Para el Checkbox
+  const [ott, setOtt] = React.useState(false);
 
 
   // API HELPERS
@@ -103,6 +123,27 @@ function App() {
     return devices.devices;
   }
 
+  async function set_task(id) {
+    const requestOptions_POST = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        {
+          command_init: `python3 -u /home/dietpi/IoTScheduler/DeviceController.py --id ${id} --set 1 --mqtt && echo "Inicio ${id}: $(date +"%D %H:%M:%S")" >> /home/dietpi/riego_$(date +"%Y").log`,
+          command_final: `python3 -u /home/dietpi/IoTScheduler/DeviceController.py --id ${id} --set 0 --mqtt && echo "Final ${id}: $(date +"%D %H:%M:%S")" >> /home/dietpi/riego_$(date +"%Y").log`,
+          inicio: `${selectedDate.toString().split(" ")[4]} ${selectedDate.getDate()}/${selectedDate.getMonth()+1}`,// hh:mm [dd/MM]
+          duracion: duracion,
+          comentario: makeid(10),
+          ott: !ott,
+        })
+    };
+    const respuesta = await fetch(`${API_URL}/set_task`, requestOptions_POST);
+
+    console.log(selectedDate, duracion, ott, selectedSectors)
+
+    return respuesta;
+  }
+
   // FUNCIONES
 
   const handleSwitchChange = async (event) => {
@@ -114,30 +155,55 @@ function App() {
       });
   }
 
+  const handleSelectionChange = (event) => {
+    setSelectedSectors({ ...selectedSectors, [event.target.name]: event.target.checked });
+  };
+
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
 
   const handleSliderChange = (event, newValue) => {
-    setValue(newValue);
+    setDuracion(newValue);
   };
 
   const handleBlur = () => {
     let max = 200
-    if (value < 0) {
-      setValue(0);
-    } else if (value > max) {
-      setValue(max);
+    if (duracion < 0) {
+      setDuracion(0);
+    } else if (duracion > max) {
+      setDuracion(max);
     }
   };
 
   const handleInputChange = (event) => {
-    setValue(event.target.value === '' ? '' : Number(event.target.value));
+    setDuracion(event.target.value === '' ? '' : Number(event.target.value));
   };
 
+  const handleOttChange = (event) => {
+    setOtt(event.target.checked);
+  };
+
+  async function handleSetTask() {
+    for (let i=0; i< Object.keys(selectedSectors).length; i++){
+      if (selectedSectors[Object.keys(selectedSectors)[i]]){
+        await set_task(Object.keys(selectedSectors)[i].replace("_selection",""));
+      }
+    }
+  };
 
   function bool2string(b) {
     return b ? "1" : "0";
+  }
+
+  function makeid(length) {
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
   }
 
   /*function Sector(id_sector) {
@@ -320,14 +386,14 @@ function App() {
           </Grid>
         </MuiPickersUtilsProvider>
 
-        <Typography id="discrete-slider" gutterBottom>
+        <Typography id="discrete-slider" className="duracion" gutterBottom>
           <br></br>
           Duración
         </Typography>
         <Grid container spacing={1} alignItems="center">
           <Grid item xs>
             <Slider
-              value={typeof value === 'number' ? value : 0}
+              value={typeof duracion === 'number' ? duracion : 0}
               onChange={handleSliderChange}
               aria-labelledby="input-slider"
               step={5}
@@ -338,7 +404,7 @@ function App() {
           <Grid item>
             <Input
               className={classes.input}
-              value={value}
+              value={duracion}
               margin="dense"
               onChange={handleInputChange}
               onBlur={handleBlur}
@@ -353,30 +419,66 @@ function App() {
           </Grid>
         </Grid>
 
-        {/**  
-        <Slider
-          margin="normal"
-          className={classes.slider}
-          defaultValue={30}
-          getAriaValueText={valuetext}
-          aria-labelledby="discrete-slider"
-          valueLabelDisplay="auto"
-          step={5}
-          marks
-          min={5}
-          max={180}
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={ott}
+              onChange={handleOttChange}
+              name="ott"
+              color="primary"
+            />
+          }
+          label="Repetir periódicamente"
         />
-        */}
-
-
-
-        <Checkbox
-          color="primary"
-          inputProps={{ 'aria-label': 'secondary checkbox' }}
-        />
-        <Typography id="discrete-slider" gutterBottom>
-          Repetir periódicamente
-        </Typography>
+        <br></br><br></br>
+        <FormControl required error={error} component="fieldset" className={classes.formControl}>
+          <FormLabel component="legend">Sectores</FormLabel>
+          <FormGroup>
+            <Grid container spacing={0} justify="center" alignItems="center">
+              <Grid item xs={6}>
+                <FormControlLabel
+                  control={<Checkbox checked={aspersores_selection} onChange={handleSelectionChange} name="aspersores_selection" />}
+                  label="Aspersores"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <FormControlLabel
+                  control={<Checkbox checked={bancal_1_selection} onChange={handleSelectionChange} name="bancal_1_selection" />}
+                  label="Bancal 1"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <FormControlLabel
+                  control={<Checkbox checked={bancal_2_selection} onChange={handleSelectionChange} name="bancal_2_selection" />}
+                  label="Bancal 2"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <FormControlLabel
+                  control={<Checkbox checked={bancal_3_W_selection} onChange={handleSelectionChange} name="bancal_3_W_selection" />}
+                  label="Bancal 3 O"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <FormControlLabel
+                  control={<Checkbox checked={bancal_3_E_selection} onChange={handleSelectionChange} name="bancal_3_E_selection" />}
+                  label="Bancal 3 E"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <FormControlLabel
+                  control={<Checkbox checked={huerto_selection} onChange={handleSelectionChange} name="huerto_selection" />}
+                  label="Huerto"
+                />
+              </Grid>
+            </Grid>
+          </FormGroup>
+          <FormHelperText>Selecciona al menos uno</FormHelperText>
+        </FormControl>
+        <br></br><br></br>
+        <Button variant="contained" color="primary" onClick={handleSetTask}>
+          Programar
+        </Button>
       </Container>
 
 
