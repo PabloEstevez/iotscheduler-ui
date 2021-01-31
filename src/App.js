@@ -10,6 +10,8 @@ import FormControl from '@material-ui/core/FormControl';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormHelperText from '@material-ui/core/FormHelperText';
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
 
 //imports para el calendario
 import 'date-fns';
@@ -68,16 +70,27 @@ function App() {
 
   // INIT
   useEffect(() => {
-    let newState = {};
-    console.log("sectorState: ", sectorState)
-    Object.keys(sectorState).forEach(key => {
-      gpio_status(key).then(status => {
-        newState[key] = status;
-      })
-    });
-    console.log("newState: ", newState);
-    setSectorState(newState);
-    console.log("newSectorState: ", sectorState)
+    const fetchStatus = async () => {
+      let newState = {};
+      console.log("sectorState: ", sectorState);
+
+      /*for (let i = 0; i < Object.keys(sectorState).length; i++) {
+        if (sectorState[Object.keys(sectorState)[i]]) {
+          await gpio_status(Object.keys(sectorState)[i]).then(status => {
+            newState[Object.keys(sectorState)[i]] = status;
+          });
+        }
+      }*/
+
+      Object.keys(sectorState).forEach(key => {
+        gpio_status(key).then(status => {
+          newState[key] = status;
+        })
+      });
+
+      setSectorState(newState);
+    }
+    fetchStatus();
   }, []);
 
 
@@ -98,6 +111,8 @@ function App() {
   const [duracion, setDuracion] = React.useState(30);
   // Para el Checkbox
   const [ott, setOtt] = React.useState(false);
+  // Para la alerta
+  const [alert, setAlert] = React.useState(false);
 
 
   // API HELPERS
@@ -131,16 +146,13 @@ function App() {
         {
           command_init: `python3 -u /home/dietpi/IoTScheduler/DeviceController.py --id ${id} --set 1 --mqtt && echo "Inicio ${id}: $(date +"%D %H:%M:%S")" >> /home/dietpi/riego_$(date +"%Y").log`,
           command_final: `python3 -u /home/dietpi/IoTScheduler/DeviceController.py --id ${id} --set 0 --mqtt && echo "Final ${id}: $(date +"%D %H:%M:%S")" >> /home/dietpi/riego_$(date +"%Y").log`,
-          inicio: `${selectedDate.toString().split(" ")[4]} ${selectedDate.getDate()}/${selectedDate.getMonth()+1}`,// hh:mm [dd/MM]
+          inicio: `${selectedDate.toString().split(" ")[4]} ${selectedDate.getDate()}/${selectedDate.getMonth() + 1}`,// hh:mm [dd/MM]
           duracion: duracion,
           comentario: makeid(10),
           ott: !ott,
         })
     };
     const respuesta = await fetch(`${API_URL}/set_task`, requestOptions_POST);
-
-    console.log(selectedDate, duracion, ott, selectedSectors)
-
     return respuesta;
   }
 
@@ -185,11 +197,19 @@ function App() {
   };
 
   async function handleSetTask() {
-    for (let i=0; i< Object.keys(selectedSectors).length; i++){
-      if (selectedSectors[Object.keys(selectedSectors)[i]]){
-        await set_task(Object.keys(selectedSectors)[i].replace("_selection",""));
+    for (let i = 0; i < Object.keys(selectedSectors).length; i++) {
+      if (selectedSectors[Object.keys(selectedSectors)[i]]) {
+        await set_task(Object.keys(selectedSectors)[i].replace("_selection", ""));
       }
     }
+    setAlert(true);
+  };
+
+  const handleCloseAlert = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setAlert(false);
   };
 
   function bool2string(b) {
@@ -201,7 +221,7 @@ function App() {
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     var charactersLength = characters.length;
     for (var i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
   }
@@ -437,37 +457,37 @@ function App() {
             <Grid container spacing={0} justify="center" alignItems="center">
               <Grid item xs={6}>
                 <FormControlLabel
-                  control={<Checkbox checked={aspersores_selection} onChange={handleSelectionChange} name="aspersores_selection" />}
+                  control={<Checkbox color="primary" checked={aspersores_selection} onChange={handleSelectionChange} name="aspersores_selection" />}
                   label="Aspersores"
                 />
               </Grid>
               <Grid item xs={6}>
                 <FormControlLabel
-                  control={<Checkbox checked={bancal_1_selection} onChange={handleSelectionChange} name="bancal_1_selection" />}
+                  control={<Checkbox color="primary" checked={bancal_1_selection} onChange={handleSelectionChange} name="bancal_1_selection" />}
                   label="Bancal 1"
                 />
               </Grid>
               <Grid item xs={6}>
                 <FormControlLabel
-                  control={<Checkbox checked={bancal_2_selection} onChange={handleSelectionChange} name="bancal_2_selection" />}
+                  control={<Checkbox color="primary" checked={bancal_2_selection} onChange={handleSelectionChange} name="bancal_2_selection" />}
                   label="Bancal 2"
                 />
               </Grid>
               <Grid item xs={6}>
                 <FormControlLabel
-                  control={<Checkbox checked={bancal_3_W_selection} onChange={handleSelectionChange} name="bancal_3_W_selection" />}
+                  control={<Checkbox color="primary" checked={bancal_3_W_selection} onChange={handleSelectionChange} name="bancal_3_W_selection" />}
                   label="Bancal 3 O"
                 />
               </Grid>
               <Grid item xs={6}>
                 <FormControlLabel
-                  control={<Checkbox checked={bancal_3_E_selection} onChange={handleSelectionChange} name="bancal_3_E_selection" />}
+                  control={<Checkbox color="primary" checked={bancal_3_E_selection} onChange={handleSelectionChange} name="bancal_3_E_selection" />}
                   label="Bancal 3 E"
                 />
               </Grid>
               <Grid item xs={6}>
                 <FormControlLabel
-                  control={<Checkbox checked={huerto_selection} onChange={handleSelectionChange} name="huerto_selection" />}
+                  control={<Checkbox color="primary" checked={huerto_selection} onChange={handleSelectionChange} name="huerto_selection" />}
                   label="Huerto"
                 />
               </Grid>
@@ -479,6 +499,11 @@ function App() {
         <Button variant="contained" color="primary" onClick={handleSetTask}>
           Programar
         </Button>
+        <Snackbar open={alert} autoHideDuration={6000} onClose={handleCloseAlert}>
+          <MuiAlert elevation={6} variant="filled" onClose={handleCloseAlert} severity="success">
+            Se ha programado con éxito!
+        </MuiAlert>
+        </Snackbar>
       </Container>
 
 
